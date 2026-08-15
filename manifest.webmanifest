@@ -1,0 +1,16 @@
+{
+  "name": "Sala de Máquinas",
+  "short_name": "Sala",
+  "description": "Entrenamiento en casa: rutinas, dieta, compra y progreso",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14181F",
+  "theme_color": "#14181F",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
