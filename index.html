@@ -633,6 +633,8 @@ let S={
           prioridad:'equilibrado',dias:4,duracion:60,nivel:'intermedio',act:'1.375',equipo:['ninguno'],limites:[]},
   meso:null, logs:{},
   plan:[[],[],[],[],[],[],[]],
+  planEj:{},        // dia -> [[ejercicio, series, reps]] elegidos a mano
+  misRutinas:[],    // rutinas guardadas por ti
   configurado:false,
   seedR:0, seedD:0,
   entrenos:[],      // {fecha, dia, nombre}
@@ -667,6 +669,9 @@ async function cargar(){
     const v=await ALM.leer(KEY);
     if(v) S=Object.assign(S,JSON.parse(v));
   }catch(e){ /* primera vez: seguimos con los valores por defecto */ }
+  // versiones antiguas guardadas sin estos campos
+  if(!S.planEj) S.planEj={};
+  if(!S.misRutinas) S.misRutinas=[];
 }
 let guardando=null;
 function guardar(){
@@ -918,6 +923,9 @@ function rutinaDePlan(){
   DIAS.forEach((d,i)=>{
     const bloques=(S.plan&&S.plan[i])||[];
     if(!bloques.length) return;
+    // si has elegido los ejercicios de este día a mano, mandan los tuyos
+    const mios=(S.planEj&&S.planEj[i])||null;
+    if(mios&&mios.length){ ses.push({n:nombreDia(i), ej:mios.map(x=>[...x]), mio:1}); return; }
     const reparto=repartoBloques(bloques), usados=new Set(), ej=[];
     const denso=bi=>(reparto[bi]>=4?1:0)+((FREC[bloques[bi]]||1)>=2&&reparto[bi]>=3?1:0);
     bloques.forEach((b,bi)=>{
@@ -955,6 +963,8 @@ function diasConPlan(){ return (S.plan||[]).filter(d=>d&&d.length).length; }
 function rutinaActual(){
   if(S.rutina==='plan'&&diasConPlan()) return rutinaDePlan();
   if(S.rutina==='auto'||!S.rutina) return rutinaAuto();
+  const mia=(S.misRutinas||[]).find(x=>x.k===S.rutina);
+  if(mia) return {...mia, descanso:'60-90 s', nota:'Rutina tuya, guardada desde Mi semana.'};
   const r=RUTINAS.find(x=>x.k===S.rutina);
   return r?{...r,descanso:'60-90 s',nota:'Rutina de la biblioteca. Ajusta las cargas para terminar cada serie con una o dos repeticiones en reserva.'}:rutinaAuto();
 }
@@ -1217,7 +1227,35 @@ const COMIDAS={
   {n:'Tortilla de claras con pavo y tomate',k:390,ing:[['Claras de huevo',200,'g','lact'],['Pavo en lonchas',60,'g','prot'],['Tomate',1,'ud','verd'],['Pan integral',50,'g','hidr']]},
   {n:'Batido de avena, plátano y proteína',k:430,ing:[['Copos de avena',60,'g','hidr'],['Plátano',1,'ud','verd'],['Proteína en polvo',30,'g','desp'],['Leche',300,'ml','lact']]},
   {n:'Requesón con fruta y semillas',k:410,ing:[['Requesón',200,'g','lact'],['Manzana',1,'ud','verd'],['Semillas de chía',15,'g','gras'],['Pan integral',40,'g','hidr']]},
-  {n:'Revuelto de huevo con espinacas',k:420,ing:[['Huevos',3,'ud','lact'],['Espinacas',80,'g','verd'],['Pan integral',60,'g','hidr'],['Aceite de oliva',10,'ml','gras']]}
+  {n:'Revuelto de huevo con espinacas',k:420,ing:[['Huevos',3,'ud','lact'],['Espinacas',80,'g','verd'],['Pan integral',60,'g','hidr'],['Aceite de oliva',10,'ml','gras']]},
+/* ---- DESAYUNO (27 recetas del plan) ---- */
+  {n:'Bocadillo de jamón y fruta',k:385,ing:[['Naranja',115,'g','verd'],['Jamón serrano',75,'g','prot'],['Pan integral',60,'g','hidr'],['Tomates',15,'g','verd']]},
+  {n:'Yogur con fruta, cereales, crema de cacahuete y coco',k:405,ing:[['Cereales de avena crunchy',20,'g','hidr'],['Skyr natural',235,'g','lact'],['Plátano',50,'g','verd'],['Fresas',30,'g','verd'],['Crema de cacahuete',10,'g','gras'],['Coco rallado',10,'g','gras']]},
+  {n:'Queso cottage con tortitas de maíz, pavo y huevo',k:430,ing:[['Arándanos',125,'g','verd'],['Queso cottage',90,'g','lact'],['Pechuga de pavo en lonchas',70,'g','prot'],['Huevo',45,'g','lact'],['Tortitas de maíz',25,'g','hidr'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Batido de plátano y chocolate',k:435,ing:[['Plátano',145,'g','verd'],['Whey isolate',25,'g','desp'],['Bebida de almendras',170,'g','lact'],['Crema de cacahuete',15,'g','gras'],['Chocolate negro 70%',15,'g','desp']]},
+  {n:'Tostadas con huevos revueltos y salmón ahumado',k:415,ing:[['Huevo',60,'g','lact'],['Claras de huevo',90,'g','lact'],['Naranja',120,'g','verd'],['Pan integral',60,'g','hidr'],['Salmón ahumado',45,'g','prot']]},
+  {n:'Yogur griego con avena y frutas del bosque',k:505,ing:[['Almendras',10,'g','gras'],['Whey isolate',15,'g','desp'],['Yogur griego',125,'g','lact'],['Frambuesas',95,'g','verd'],['Arándanos',95,'g','verd'],['Avena',30,'g','hidr'],['Semillas de chía',10,'g','gras']]},
+  {n:'Gachas de avena con cacao, crema de cacahuete y plátano',k:450,ing:[['Whey isolate',10,'g','desp'],['Claras de huevo',95,'g','lact'],['Bebida de almendras',105,'g','lact'],['Plátano',50,'g','verd'],['Avena',40,'g','hidr'],['Crema de cacahuete',25,'g','gras']]},
+  {n:'Pan tumaca con lomo embuchado y queso manchego',k:355,ing:[['Tomates',75,'g','verd'],['Pan de molde de espelta',65,'g','hidr'],['Lomo embuchado',40,'g','prot'],['Queso manchego',20,'g','lact']]},
+  {n:'Tortitas de avena con arándanos',k:385,ing:[['Aceite de coco',10,'g','gras'],['Claras de huevo',100,'g','lact'],['Kiwi',70,'g','verd'],['Arándanos',60,'g','verd'],['Avena',30,'g','hidr'],['Whey isolate',15,'g','desp']]},
+  {n:'Pan con queso cottage y salmón ahumado',k:380,ing:[['Arándanos',75,'g','verd'],['Pan integral',60,'g','hidr'],['Queso cottage',90,'g','lact'],['Salmón ahumado',60,'g','prot']]},
+  {n:'Tostadas de jamón',k:410,ing:[['Frambuesas',105,'g','verd'],['Jamón serrano',70,'g','prot'],['Pan de centeno integral',75,'g','hidr'],['Tomates',35,'g','verd']]},
+  {n:'Gachas de avena proteicas',k:390,ing:[['Plátano',40,'g','verd'],['Fresas',80,'g','verd'],['Frambuesas congeladas',65,'g','verd'],['Avena',25,'g','hidr'],['Whey isolate',20,'g','desp'],['Crema de cacahuete',20,'g','gras'],['Bebida de soja',10,'g','lact']]},
+  {n:'Smoothie con plátano, granola y dátiles',k:380,ing:[['Bebida de almendras',250,'g','lact'],['Plátano',35,'g','verd'],['Peanut butter en polvo',15,'g','desp'],['Granola',25,'g','hidr'],['Whey isolate',20,'g','desp'],['Dátiles',20,'g','verd']]},
+  {n:'Huevos revueltos y bacon con tostadas',k:445,ing:[['Manzana',85,'g','verd'],['Claras de huevo',110,'g','lact'],['Pan integral',60,'g','hidr'],['Huevo',40,'g','lact'],['Bacon',35,'g','prot']]},
+  {n:'Leche con proteína y Choco Krispies',k:405,ing:[['Plátano',60,'g','verd'],['Bebida de almendras',125,'g','lact'],['Choco Krispies',25,'g','hidr'],['Whey isolate',35,'g','desp'],['Nueces',15,'g','gras']]},
+  {n:'Bocadillo de tortilla, queso y tomate',k:405,ing:[['Queso manchego',20,'g','lact'],['Claras de huevo',115,'g','lact'],['Huevo',55,'g','lact'],['Pan integral',65,'g','hidr'],['Tomates',35,'g','verd'],['Kiwi',45,'g','verd']]},
+  {n:'Smoothie de frutas y coco',k:400,ing:[['Crema de cacahuete',10,'g','gras'],['Skyr natural',100,'g','lact'],['Frambuesas congeladas',40,'g','verd'],['Mango',45,'g','verd'],['Plátano',40,'g','verd'],['Coco rallado',10,'g','gras'],['Avena',20,'g','hidr'],['Whey isolate',15,'g','desp']]},
+  {n:'Yogur con avena, dátiles y frutas del bosque',k:400,ing:[['Crema de cacahuete',25,'g','gras'],['Dátiles',15,'g','verd'],['Postre lácteo proteínas',185,'g','lact'],['Arándanos',40,'g','verd'],['Frambuesas',35,'g','verd'],['Avena',15,'g','hidr']]},
+  {n:'Gachas de avena con cacao, avellanas y plátano',k:415,ing:[['Whey hydro vainilla',15,'g','desp'],['Claras de huevo',95,'g','lact'],['Bebida de almendras',150,'g','lact'],['Plátano',60,'g','verd'],['Avena',35,'g','hidr'],['Crema de avellanas',15,'g','gras']]},
+  {n:'Crepes de avena salados',k:390,ing:[['Harina de avena',30,'g','hidr'],['Kiwi',90,'g','verd'],['Huevo',40,'g','lact'],['Pechuga de pavo en lonchas',55,'g','prot'],['Queso cheddar',30,'g','lact']]},
+  {n:'Bocadillo de jamón',k:380,ing:[['Sandía',80,'g','verd'],['Jamón serrano',75,'g','prot'],['Pan integral',70,'g','hidr']]},
+  {n:'Tortitas con arándanos',k:410,ing:[['Harina de trigo integral',25,'g','hidr'],['Claras de huevo',90,'g','lact'],['Kiwi',65,'g','verd'],['Arándanos',65,'g','verd'],['Crema de cacahuete',25,'g','gras'],['Whey isolate',15,'g','desp']]},
+  {n:'Bagel con huevos revueltos y pavo',k:385,ing:[['Bagel multigrano',60,'g','hidr'],['Claras de huevo',65,'g','lact'],['Huevo',45,'g','lact'],['Pechuga de pavo en lonchas',65,'g','prot'],['Tomates',40,'g','verd'],['Espinacas',20,'g','verd'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Huevos a la plancha con bacon y tostadas',k:455,ing:[['Pan integral',50,'g','hidr'],['Bacon de pavo',95,'g','prot'],['Kiwi',105,'g','verd'],['Huevo',85,'g','lact']]},
+  {n:'Crema protéica de arroz',k:415,ing:[['Bebida de almendras',90,'g','lact'],['Plátano',50,'g','verd'],['Whey isolate',20,'g','desp'],['Gachas de arroz instantáneas',25,'g','hidr'],['Crema de cacahuete',30,'g','gras']]},
+  {n:'Crepes con crema de cacahuete, fresas y plátano',k:390,ing:[['Whey hydro vainilla',15,'g','desp'],['Claras de huevo',60,'g','lact'],['Fresas',40,'g','verd'],['Plátano',50,'g','verd'],['Avena',25,'g','hidr'],['Crema de cacahuete',25,'g','gras']]},
+  {n:'Tostadas de aguacate con atún',k:390,ing:[['Naranja',125,'g','verd'],['Atún en lata',90,'g','prot'],['Aguacate',70,'g','verd'],['Pan integral',50,'g','hidr']]}
  ],
  comida:[
   {n:'Pollo a la plancha con arroz y brócoli',k:640,ing:[['Pechuga de pollo',180,'g','prot'],['Arroz',90,'g','hidr'],['Brócoli',200,'g','verd'],['Aceite de oliva',10,'ml','gras']]},
@@ -1226,7 +1264,34 @@ const COMIDAS={
   {n:'Ternera salteada con quinoa y pimientos',k:650,ing:[['Ternera magra',170,'g','prot'],['Quinoa',80,'g','hidr'],['Pimiento',1,'ud','verd'],['Cebolla',0.5,'ud','verd'],['Aceite de oliva',10,'ml','gras']]},
   {n:'Pasta integral con atún y tomate',k:610,ing:[['Pasta integral',100,'g','hidr'],['Atún al natural',150,'g','prot'],['Tomate triturado',200,'g','desp'],['Aceite de oliva',10,'ml','gras']]},
   {n:'Garbanzos con espinacas y huevo',k:590,ing:[['Garbanzos cocidos',250,'g','hidr'],['Espinacas',150,'g','verd'],['Huevos',1,'ud','lact'],['Aceite de oliva',10,'ml','gras']]},
-  {n:'Pavo con boniato y ensalada',k:600,ing:[['Pechuga de pavo',180,'g','prot'],['Boniato',250,'g','hidr'],['Lechuga',100,'g','verd'],['Tomate',1,'ud','verd'],['Aceite de oliva',10,'ml','gras']]}
+  {n:'Pavo con boniato y ensalada',k:600,ing:[['Pechuga de pavo',180,'g','prot'],['Boniato',250,'g','hidr'],['Lechuga',100,'g','verd'],['Tomate',1,'ud','verd'],['Aceite de oliva',10,'ml','gras']]},
+/* ---- COMIDA (26 recetas del plan) ---- */
+  {n:'Hamburguesas de pollo y patatas',k:700,ing:[['Queso mezcla curado',15,'g','lact'],['Hamburguesa de pollo',150,'g','prot'],['Patata cocida en conserva',210,'g','hidr'],['Huevo',50,'g','lact'],['Pan de hamburguesa integral',60,'g','hidr']]},
+  {n:'Bocadillo de pollo, queso y aguacate',k:580,ing:[['Queso 16%',20,'g','lact'],['Manzana',110,'g','verd'],['Pechuga de pollo',140,'g','prot'],['Pan integral',95,'g','hidr'],['Aguacate',50,'g','verd']]},
+  {n:'Wrap de salmón y aguacate',k:650,ing:[['Manzana',55,'g','verd'],['Maíz en conserva',40,'g','hidr'],['Salmón',120,'g','prot'],['Wrap de chía y lino',65,'g','hidr'],['Tomates cherri',100,'g','verd'],['Aguacate',45,'g','verd'],['Lechuga romana',40,'g','verd'],['Queso 16%',20,'g','lact']]},
+  {n:'Arroz con huevo y pollo + dátiles',k:570,ing:[['Aceite de oliva',5,'g','gras'],['Huevo',120,'g','lact'],['Pechuga de pollo',125,'g','prot'],['Arroz basmati',45,'g','hidr'],['Dátiles',20,'g','verd']]},
+  {n:'Pollo a la plancha con ensalada de tomate y aguacate',k:620,ing:[['Pan integral',55,'g','hidr'],['Tomates',195,'g','verd'],['Garbanzos en conserva',145,'g','hidr'],['Pechuga de pollo',130,'g','prot'],['Aguacate',50,'g','verd'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Hamburguesas de pavo y pasta integral',k:510,ing:[['Canónigos',50,'g','verd'],['Carne picada de pavo',155,'g','prot'],['Pasta integral',55,'g','hidr'],['Tortitas de maíz',20,'g','hidr'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Taco bowl con carne picada de ternera',k:540,ing:[['Mayonesa light',15,'g','gras'],['Alubias negras',70,'g','hidr'],['Maíz en conserva',50,'g','hidr'],['Carne picada de vacuno',115,'g','prot'],['Tomates',85,'g','verd'],['Arroz integral',35,'g','hidr'],['Salsa de tomate',40,'g','desp'],['Queso cheddar',20,'g','lact'],['Cebolla',35,'g','verd']]},
+  {n:'Tortilla de patata y pollo',k:550,ing:[['Patata',170,'g','hidr'],['Claras de huevo',60,'g','lact'],['Pechuga de pollo',100,'g','prot'],['Pan integral',50,'g','hidr'],['Huevo',50,'g','lact'],['Queso manchego',20,'g','lact']]},
+  {n:'Taco bowl con arroz y pollo',k:550,ing:[['Queso manchego',20,'g','lact'],['Pechuga de pollo',130,'g','prot'],['Pimiento verde',90,'g','verd'],['Lechuga',80,'g','verd'],['Tomates',75,'g','verd'],['Maíz en conserva',45,'g','hidr'],['Cebolla morada',45,'g','verd'],['Arroz basmati',40,'g','hidr'],['Aguacate',35,'g','verd'],['Queso cottage',35,'g','lact']]},
+  {n:'Gazpacho con ensalada de patata y atún',k:550,ing:[['Tortitas de maíz',15,'g','hidr'],['Maíz en conserva',30,'g','hidr'],['Patata cocida en conserva',245,'g','hidr'],['Queso cottage',60,'g','lact'],['Atún en lata',95,'g','prot'],['Huevo',45,'g','lact'],['Gazpacho',150,'g','verd']]},
+  {n:'Hamburguesas de ternera a la plancha con patatas',k:535,ing:[['Queso manchego',20,'g','lact'],['Pan de trigo sarraceno',45,'g','hidr'],['Patata',220,'g','hidr'],['Carne picada de vacuno',130,'g','prot']]},
+  {n:'Gnocchis con feta y pollo',k:600,ing:[['Pan integral',35,'g','hidr'],['Muslo de pollo',150,'g','prot'],['Gnocchi de patata',80,'g','hidr'],['Champiñones',105,'g','verd'],['Salsa de tomate',70,'g','desp'],['Cebolla morada',65,'g','verd'],['Feta',25,'g','lact'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Salmón con arroz y verduras',k:695,ing:[['Judías verdes',110,'g','verd'],['Salmón',155,'g','prot'],['Espárragos trigueros',95,'g','verd'],['Arroz integral',30,'g','hidr'],['Pan integral',35,'g','hidr'],['Aceite de coco',15,'g','gras']]},
+  {n:'Arroz con pollo y garbanzos',k:620,ing:[['Pechuga de pollo',130,'g','prot'],['Garbanzos en conserva',145,'g','hidr'],['Huevo',50,'g','lact'],['Arroz basmati',40,'g','hidr'],['Aceite de oliva',10,'g','gras']]},
+  {n:'Ñoquis con carne picada y champiñones',k:580,ing:[['Aceite de oliva',5,'g','gras'],['Carne picada de vacuno',135,'g','prot'],['Gnocchi de patata',90,'g','hidr'],['Huevo',50,'g','lact'],['Champiñones',85,'g','verd'],['Cebolla',50,'g','verd'],['Pan integral',40,'g','hidr']]},
+  {n:'Hamburguesa casera',k:520,ing:[['Patata',130,'g','hidr'],['Carne picada de vacuno',140,'g','prot'],['Pan de hamburguesa integral',55,'g','hidr'],['Tomates',35,'g','verd'],['Queso manchego',20,'g','lact'],['Lechuga',15,'g','verd'],['Cebolla',15,'g','verd']]},
+  {n:'Pescado a la plancha con arroz y verduras',k:480,ing:[['Aceite de oliva',5,'g','gras'],['Guisantes congelados',95,'g','verd'],['Lubina',120,'g','prot'],['Champiñones',70,'g','verd'],['Arroz basmati',35,'g','hidr'],['Pan integral',40,'g','hidr']]},
+  {n:'Bowl de pollo crispy',k:545,ing:[['Pechuga de pollo',170,'g','prot'],['Aguacate',50,'g','verd'],['Huevo',50,'g','lact'],['Arroz basmati',30,'g','hidr'],['Tomates cherri',35,'g','verd'],['Corn Flakes',25,'g','hidr']]},
+  {n:'Salteado rápido de verduras y salmón',k:665,ing:[['Wok de verduras congeladas',190,'g','verd'],['Salmón',135,'g','prot'],['Wrap de chía y lino',75,'g','hidr'],['Queso mezcla curado',25,'g','lact']]},
+  {n:'Guiso de lentejas',k:565,ing:[['Pechuga de pollo',120,'g','prot'],['Zanahorias',85,'g','verd'],['Lentejas',60,'g','hidr'],['Cebolla',75,'g','verd'],['Calabaza',70,'g','verd'],['Tomates',40,'g','verd'],['Aceite de oliva',15,'g','gras']]},
+  {n:'Ensalada de pasta con atún',k:530,ing:[['Lechuga romana',50,'g','verd'],['Zanahorias',50,'g','verd'],['Tomates',85,'g','verd'],['Tortitas de arroz',15,'g','hidr'],['Mayonesa light',25,'g','gras'],['Queso cottage',85,'g','lact'],['Huevos cocidos',40,'g','lact'],['Atún en lata',85,'g','prot'],['Pasta de trigo sarraceno',35,'g','hidr']]},
+  {n:'Poke bowl de pollo',k:550,ing:[['Mayonesa light',10,'g','gras'],['Semillas de sésamo',5,'g','gras'],['Queso manchego',10,'g','lact'],['Maíz en conserva',20,'g','hidr'],['Muslo de pollo',185,'g','prot'],['Manzana',50,'g','verd'],['Mango',50,'g','verd'],['Arroz basmati',40,'g','hidr']]},
+  {n:'Bocadillo de ternera con queso',k:550,ing:[['Solomillo de ternera',125,'g','prot'],['Pan integral',125,'g','hidr'],['Queso mezcla curado',20,'g','lact']]},
+  {n:'Pasta con gambas y aguacate',k:600,ing:[['Parmesano',15,'g','lact'],['Gambas cocidas',195,'g','prot'],['Calabaza',135,'g','verd'],['Cebolla',80,'g','verd'],['Aguacate',30,'g','verd'],['Pasta',45,'g','hidr'],['Aceite de oliva',10,'g','gras']]},
+  {n:'Pescado a la plancha con ñoquis y verduras',k:600,ing:[['Merluza',165,'g','prot'],['Champiñones',225,'g','verd'],['Brócoli',145,'g','verd'],['Gnocchi de patata',110,'g','hidr'],['Pan integral',20,'g','hidr'],['Aceite de oliva',15,'g','gras']]},
+  {n:'Paella con pollo',k:565,ing:[['Muslo de pollo',195,'g','prot'],['Tomates',75,'g','verd'],['Pimiento rojo',50,'g','verd'],['Arroz bomba',40,'g','hidr'],['Judías verdes',50,'g','verd'],['Pimiento verde',40,'g','verd'],['Zanahorias',40,'g','verd'],['Cebolla',25,'g','verd'],['Aceite de oliva',10,'g','gras']]}
  ],
  cena:[
   {n:'Merluza al horno con verduras',k:430,ing:[['Merluza',200,'g','prot'],['Calabacín',1,'ud','verd'],['Cebolla',0.5,'ud','verd'],['Aceite de oliva',10,'ml','gras']]},
@@ -1235,7 +1300,30 @@ const COMIDAS={
   {n:'Crema de calabacín con tofu a la plancha',k:390,ing:[['Calabacín',2,'ud','verd'],['Puerro',1,'ud','verd'],['Tofu',180,'g','prot'],['Aceite de oliva',10,'ml','gras']]},
   {n:'Ensalada de atún, huevo y alubias',k:460,ing:[['Atún al natural',120,'g','prot'],['Huevos',2,'ud','lact'],['Alubias cocidas',150,'g','hidr'],['Lechuga',100,'g','verd'],['Aceite de oliva',10,'ml','gras']]},
   {n:'Salteado de gambas con verduras',k:400,ing:[['Gambas',200,'g','prot'],['Pimiento',1,'ud','verd'],['Calabacín',1,'ud','verd'],['Aceite de oliva',10,'ml','gras']]},
-  {n:'Tortilla de patata ligera con ensalada',k:440,ing:[['Huevos',3,'ud','lact'],['Patata',200,'g','hidr'],['Cebolla',0.5,'ud','verd'],['Lechuga',80,'g','verd'],['Aceite de oliva',12,'ml','gras']]}
+  {n:'Tortilla de patata ligera con ensalada',k:440,ing:[['Huevos',3,'ud','lact'],['Patata',200,'g','hidr'],['Cebolla',0.5,'ud','verd'],['Lechuga',80,'g','verd'],['Aceite de oliva',12,'ml','gras']]},
+/* ---- CENA (22 recetas del plan) ---- */
+  {n:'Lubina con verdura',k:430,ing:[['Tortitas de arroz',20,'g','hidr'],['Aceite de oliva',5,'g','gras'],['Patata cocida en conserva',175,'g','hidr'],['Lubina',110,'g','prot'],['Cebolla',90,'g','verd'],['Champiñones',120,'g','verd']]},
+  {n:'Crema de calabaza con pollo',k:545,ing:[['Garbanzos en conserva',70,'g','hidr'],['Picatostes',30,'g','hidr'],['Queso manchego',20,'g','lact'],['Pechuga de pollo',105,'g','prot'],['Crema de calabaza',265,'g','verd']]},
+  {n:'Gnocchi con pollo, verduras y huevo',k:520,ing:[['Judías verdes',115,'g','verd'],['Champiñones',115,'g','verd'],['Pechuga de pollo',115,'g','prot'],['Gnocchi de patata',80,'g','hidr'],['Cebolla',80,'g','verd'],['Huevo',55,'g','lact'],['Aceite de oliva',10,'g','gras']]},
+  {n:'Quesadilla de pollo y espinacas',k:455,ing:[['Manzana',60,'g','verd'],['Pechuga de pollo cocida',90,'g','prot'],['Wrap de chía y lino',60,'g','hidr'],['Queso manchego',25,'g','lact'],['Espinacas',20,'g','verd'],['Maíz en conserva',40,'g','hidr']]},
+  {n:'Paninis prosciutto',k:490,ing:[['Queso mezcla curado',15,'g','lact'],['Pechuga de pavo en lonchas',90,'g','prot'],['Tomates cherri',110,'g','verd'],['Pan integral',80,'g','hidr'],['Tomate triturado',50,'g','desp'],['Mozzarella',40,'g','lact']]},
+  {n:'Poke bowl de salmón con aguacate',k:690,ing:[['Tortitas de maíz',10,'g','hidr'],['Salmón',115,'g','prot'],['Pepino',80,'g','verd'],['Zanahorias',60,'g','verd'],['Mango',55,'g','verd'],['Quinoa',45,'g','hidr'],['Aguacate',35,'g','verd'],['Canónigos',65,'g','verd'],['Queso cottage',45,'g','lact'],['Maíz en conserva',30,'g','hidr'],['Queso crema',20,'g','lact']]},
+  {n:'Sándwich de pollo y hummus',k:515,ing:[['Pechuga de pollo',145,'g','prot'],['Pan integral',80,'g','hidr'],['Manzana',25,'g','verd'],['Humus',25,'g','gras'],['Tomates',20,'g','verd'],['Lechuga',15,'g','verd'],['Mayonesa light',20,'g','gras']]},
+  {n:'Pollo KFC con patatas fritas y huevo',k:475,ing:[['Patata cocida en conserva',155,'g','hidr'],['Pechuga de pavo',110,'g','prot'],['Huevo',45,'g','lact'],['Mayonesa light',25,'g','gras'],['Corn Flakes',25,'g','hidr']]},
+  {n:'Ensalada de queso de cabra y pollo',k:450,ing:[['Lechuga iceberg',60,'g','verd'],['Tomates cherri',65,'g','verd'],['Pechuga de pavo',85,'g','prot'],['Zanahorias',55,'g','verd'],['Queso de cabra',35,'g','lact'],['Maíz en conserva',25,'g','hidr'],['Picatostes',25,'g','hidr'],['Pasas',10,'g','verd'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Bowl con pollo, huevo y boniato',k:455,ing:[['Boniato',180,'g','hidr'],['Pechuga de pollo',125,'g','prot'],['Zanahorias',85,'g','verd'],['Huevo',50,'g','lact'],['Aguacate',30,'g','verd']]},
+  {n:'Wraps de lechuga de atún y aguacate',k:455,ing:[['Mayonesa light',20,'g','gras'],['Tortitas de maíz',15,'g','hidr'],['Patata cocida en conserva',160,'g','hidr'],['Aguacate',40,'g','verd'],['Atún en lata',115,'g','prot'],['Manzana',40,'g','verd'],['Lechuga',35,'g','verd']]},
+  {n:'Wrap de salmón y aguacate',k:490,ing:[['Salmón',95,'g','prot'],['Tomates cherri',40,'g','verd'],['Wrap de chía y lino',65,'g','hidr'],['Maíz en conserva',30,'g','hidr'],['Lechuga romana',30,'g','verd'],['Aguacate',25,'g','verd'],['Queso 16%',10,'g','lact']]},
+  {n:'Patata al horno con ensalada ligera de atún',k:445,ing:[['Patata',200,'g','hidr'],['Atún en lata',75,'g','prot'],['Maíz en conserva',45,'g','hidr'],['Queso 16%',30,'g','lact'],['Mantequilla',10,'g','gras'],['Yogur griego',15,'g','lact']]},
+  {n:'Tortilla de calabacín y setas',k:470,ing:[['Claras de huevo',155,'g','lact'],['Huevo',70,'g','lact'],['Champiñones',115,'g','verd'],['Pan integral',70,'g','hidr'],['Cebolla',35,'g','verd'],['Setas shiitake',45,'g','verd'],['Setas ostra',60,'g','verd'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Ensalada de pasta con atún',k:445,ing:[['Manzana',80,'g','verd'],['Atún en lata',80,'g','prot'],['Tomates',65,'g','verd'],['Lechuga',50,'g','verd'],['Queso cottage',50,'g','lact'],['Aguacate',45,'g','verd'],['Pasta de trigo sarraceno',35,'g','hidr'],['Cebolla',25,'g','verd'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Pollo KFC con boniato',k:455,ing:[['Boniato',135,'g','hidr'],['Pechuga de pavo',115,'g','prot'],['Corn Flakes',20,'g','hidr'],['Huevo',40,'g','lact'],['Mayonesa light',25,'g','gras']]},
+  {n:'Puré de verdura y pollo a la plancha',k:465,ing:[['Aceite de oliva',10,'g','gras'],['Pechuga de pollo',130,'g','prot'],['Patata cocida en conserva',165,'g','hidr'],['Puerro',95,'g','verd'],['Zanahorias',130,'g','verd'],['Calabacín',130,'g','verd']]},
+  {n:'Sopa de fideos con pollo',k:435,ing:[['Huevo',115,'g','lact'],['Zanahorias',100,'g','verd'],['Pechuga de pollo',80,'g','prot'],['Pasta',20,'g','hidr'],['Picatostes',15,'g','hidr']]},
+  {n:'Pollo a la plancha con ensalada de tomate y aguacate',k:465,ing:[['Tomates',110,'g','verd'],['Garbanzos en conserva',110,'g','hidr'],['Pechuga de pollo',115,'g','prot'],['Tortitas de maíz',20,'g','hidr'],['Aguacate',20,'g','verd'],['Nueces',5,'g','gras'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Patatas fritas de boniato y pechuga de pollo',k:450,ing:[['Boniato',160,'g','hidr'],['Pechuga de pollo',100,'g','prot'],['Huevo',65,'g','lact'],['Aguacate',40,'g','verd'],['Tortitas de arroz',10,'g','hidr']]},
+  {n:'Puré de verduras con pescado a la plancha',k:455,ing:[['Aceite de oliva',5,'g','gras'],['Abadejo',145,'g','prot'],['Pan integral',25,'g','hidr'],['Patata cocida en conserva',115,'g','hidr'],['Queso crema',30,'g','lact'],['Calabaza',75,'g','verd'],['Calabacín',60,'g','verd'],['Puerro',45,'g','verd'],['Cebolla',60,'g','verd']]},
+  {n:'Lubina a la plancha con zanahorias',k:305,ing:[['Tortitas de maíz',15,'g','hidr'],['Arroz integral con quinoa',45,'g','hidr'],['Zanahorias',160,'g','verd'],['Lubina',115,'g','prot']]}
  ],
  snack:[
   {n:'Yogur natural con almendras',k:210,ing:[['Yogur natural',125,'g','lact'],['Almendras',25,'g','gras']]},
@@ -1244,7 +1332,49 @@ const COMIDAS={
   {n:'Tostada con pavo',k:200,ing:[['Pan integral',40,'g','hidr'],['Pavo en lonchas',60,'g','prot']]},
   {n:'Puñado de frutos secos y fruta',k:230,ing:[['Nueces',30,'g','gras'],['Plátano',1,'ud','verd']]},
   {n:'Tortitas de arroz con crema de cacahuete',k:200,ing:[['Tortitas de arroz',30,'g','hidr'],['Crema de cacahuete',20,'g','gras']]},
-  {n:'Requesón con miel',k:200,ing:[['Requesón',150,'g','lact'],['Miel',15,'g','desp']]}
+  {n:'Requesón con miel',k:200,ing:[['Requesón',150,'g','lact'],['Miel',15,'g','desp']]},
+/* ---- SNACK (41 recetas del plan) ---- */
+  {n:'Tortitas de arroz con crema de cacahuete, mermelada y batido de proteína',k:195,ing:[['Whey isolate',10,'g','desp'],['Mermelada de fresa',10,'g','desp'],['Tortitas de arroz',10,'g','hidr'],['Bebida de avena',75,'g','lact'],['Crema de cacahuete',10,'g','gras']]},
+  {n:'Tostada con tomate rallado y atún',k:205,ing:[['Pan integral',40,'g','hidr'],['Tomates',55,'g','verd'],['Atún en lata',45,'g','prot'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Pan crujiente con hummus y lonchas de pavo',k:195,ing:[['Pechuga de pavo en lonchas',55,'g','prot'],['Humus',20,'g','gras'],['Pan crujiente de avena',20,'g','hidr']]},
+  {n:'Yopro con cereales y crema de cacahuete',k:220,ing:[['Crema de cacahuete',15,'g','gras'],['YoPRO vainilla',115,'g','lact'],['Cereales copos de maíz',15,'g','hidr']]},
+  {n:'Yogur con Choco Krispies',k:180,ing:[['Yogur natural',145,'g','lact'],['Plátano',20,'g','verd'],['Choco Krispies',10,'g','hidr'],['Whey isolate',10,'g','desp']]},
+  {n:'Barrita y fruta',k:225,ing:[['Mandarina',95,'g','verd'],['Zero Snack',35,'g','desp'],['Crema de cacahuete',10,'g','gras']]},
+  {n:'Tortitas de arroz con lomo y nueces',k:230,ing:[['Lomo embuchado',35,'g','prot'],['Tortitas de maíz',20,'g','hidr'],['Nueces',10,'g','gras']]},
+  {n:'Smoothie con plátano y dátiles',k:200,ing:[['Skyr natural',105,'g','lact'],['Bebida de almendras',120,'g','lact'],['Plátano',30,'g','verd'],['Dátiles',10,'g','verd'],['Peanut butter',10,'g','gras']]},
+  {n:'Yogur con galletas',k:185,ing:[['Crema de cacahuete',5,'g','gras'],['Fresas',55,'g','verd'],['Skyr natural',105,'g','lact'],['Galletas digestive',15,'g','desp']]},
+  {n:'Batido de proteínas y galletas digestive',k:195,ing:[['Galletas digestive',25,'g','desp'],['Whey isolate',20,'g','desp']]},
+  {n:'Macedonia de frutas con yogur',k:215,ing:[['Crema de cacahuete',10,'g','gras'],['Postre lácteo proteínas',110,'g','lact'],['Melón verde',75,'g','verd'],['Arándanos',30,'g','verd'],['Fresas',55,'g','verd'],['Chocolate negro 70%',5,'g','desp']]},
+  {n:'Pan protéico con miel, crema de cacahuete protéica y plátano',k:215,ing:[['Plátano',30,'g','verd'],['Pan protéico',30,'g','hidr'],['Crema de cacahuete',10,'g','gras'],['Whey isolate',10,'g','desp'],['Miel',5,'g','desp']]},
+  {n:'Helado casero rápido de frambuesa y plátano',k:200,ing:[['Plátano',35,'g','verd'],['Yogur natural',115,'g','lact'],['Frambuesas congeladas',50,'g','verd'],['Almendras',10,'g','gras'],['Miel',5,'g','desp']]},
+  {n:'Mousse de caseína',k:180,ing:[['Plátano',45,'g','verd'],['Chocolate negro 70%',15,'g','desp'],['Caseína',15,'g','desp']]},
+  {n:'Tortitas de arroz con jamón serrano y queso crema',k:225,ing:[['Jamón serrano',45,'g','prot'],['Tortitas de arroz',25,'g','hidr'],['Queso crema light',15,'g','lact']]},
+  {n:'Tortitas de arroz con crema de cacahuete protéica, plátano y coco rallado',k:235,ing:[['Crema de cacahuete',10,'g','gras'],['Plátano',35,'g','verd'],['Whey isolate',15,'g','desp'],['Tortitas de arroz',15,'g','hidr'],['Coco rallado',5,'g','gras']]},
+  {n:'Yogur con cereales, crema de cacahuete y arándanos',k:250,ing:[['Postre lácteo proteínas',135,'g','lact'],['Arándanos',40,'g','verd'],['Corn Flakes',15,'g','hidr'],['Crema de cacahuete',15,'g','gras']]},
+  {n:'Corn flakes con proteína',k:220,ing:[['Fresas',85,'g','verd'],['Corn Flakes',20,'g','hidr'],['Whey isolate',15,'g','desp'],['Peanut butter',10,'g','gras']]},
+  {n:'Mozzarella con tortitas de maíz y pavo',k:250,ing:[['Mozzarella light',30,'g','lact'],['Arándanos',75,'g','verd'],['Pechuga de pavo en lonchas',50,'g','prot'],['Tortitas de maíz',15,'g','hidr'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Sándwich de pavo',k:245,ing:[['Pechuga de pavo en lonchas',70,'g','prot'],['Pan integral',50,'g','hidr'],['Aceite de oliva',5,'g','gras']]},
+  {n:'Tostada de queso philadelphia y mermelada',k:190,ing:[['Whey isolate',5,'g','desp'],['Plátano',20,'g','verd'],['Lean Bread',45,'g','hidr'],['Queso crema light',20,'g','lact'],['Mermelada de fresa',5,'g','desp']]},
+  {n:'Tostada de crema de cacahuete protéica y plátano',k:190,ing:[['Bebida de almendras',15,'g','lact'],['Whey isolate',10,'g','desp'],['Pan integral',30,'g','hidr'],['Plátano',15,'g','verd'],['Crema de cacahuete',10,'g','gras']]},
+  {n:'Corn flakes con proteína y plátano',k:170,ing:[['Plátano',20,'g','verd'],['Whey isolate',10,'g','desp'],['Bebida de almendras',75,'g','lact'],['Frosted Flakes',10,'g','hidr'],['Crema de cacahuete',10,'g','gras']]},
+  {n:'Yogur griego con arándanos y avena',k:230,ing:[['Yogur griego',135,'g','lact'],['Arándanos',15,'g','verd'],['Avena',15,'g','hidr'],['Crema de cacahuete',5,'g','gras']]},
+  {n:'Tortitas de maíz con pavo y queso',k:160,ing:[['Queso cottage',25,'g','lact'],['Tortitas de maíz',25,'g','hidr'],['Pechuga de pavo en lonchas',40,'g','prot']]},
+  {n:'Yopro con cereales y chocolate',k:190,ing:[['YoPRO vainilla',140,'g','lact'],['Cereales copos de maíz',10,'g','hidr'],['Chocolate negro 85%',10,'g','desp']]},
+  {n:'Tortitas de maíz con queso y salmón ahumado',k:185,ing:[['Queso cottage',30,'g','lact'],['Salmón ahumado',30,'g','prot'],['Tortitas de maíz',20,'g','hidr'],['Queso 16%',10,'g','lact']]},
+  {n:'Brownie mugcake',k:190,ing:[['Plátano',30,'g','verd'],['Claras de huevo',80,'g','lact'],['Bebida de almendras',25,'g','lact'],['Avena',10,'g','hidr'],['Cacao en polvo',15,'g','desp'],['Crema de cacahuete',5,'g','gras']]},
+  {n:'Batido de plátano y chocolate',k:185,ing:[['Plátano',60,'g','verd'],['Whey isolate',15,'g','desp'],['Bebida de almendras',80,'g','lact'],['Crema de cacahuete',5,'g','gras'],['Chocolate negro 70%',5,'g','desp']]},
+  {n:'Tortitas de arroz con pavo + nueces',k:200,ing:[['Nueces',10,'g','gras'],['Pechuga de pavo',55,'g','prot'],['Tortitas de arroz',20,'g','hidr']]},
+  {n:'Mousse de caseína con fresas',k:170,ing:[['Crema de cacahuete',10,'g','gras'],['Caseína',15,'g','desp'],['Fresas',170,'g','verd']]},
+  {n:'Pudín de chía y avena con coco y kiwi',k:210,ing:[['Avena',15,'g','hidr'],['Yogur griego',45,'g','lact'],['Leche de coco light',40,'g','lact'],['Kiwi',30,'g','verd'],['Whey hydro vainilla',10,'g','desp'],['Semillas de chía',5,'g','gras']]},
+  {n:'Tortitas de arroz con crema de cacahuete protéica y mermelada',k:185,ing:[['Crema de cacahuete',10,'g','gras'],['Whey isolate',15,'g','desp'],['Tortitas de arroz',15,'g','hidr'],['Mermelada de fresa',5,'g','desp']]},
+  {n:'Mugcake de arándanos en taza',k:185,ing:[['Whey isolate',10,'g','desp'],['Harina de avena',15,'g','hidr'],['Yogur griego',40,'g','lact'],['Huevo',20,'g','lact'],['Arándanos',10,'g','verd'],['Miel',5,'g','desp']]},
+  {n:'Macedonia de frutas con yogur y cereales',k:240,ing:[['Granola',15,'g','hidr'],['Postre lácteo proteínas',125,'g','lact'],['Fresas',60,'g','verd'],['Arándanos',35,'g','verd'],['Chocolate negro 85%',10,'g','desp']]},
+  {n:'Tortitas de arroz inflado con pechuga de pollo + nueces',k:220,ing:[['Nueces',10,'g','gras'],['Pechuga de pollo cocida',65,'g','prot'],['Tortitas de arroz',20,'g','hidr']]},
+  {n:'Bagel con crema de cacahuete y plátano + batido de proteínas',k:225,ing:[['Whey hydro vainilla',10,'g','desp'],['Bagel multigrano',30,'g','hidr'],['Plátano',15,'g','verd'],['Crema de cacahuete',15,'g','gras']]},
+  {n:'Tortitas de arroz con jamón serrano + fruta',k:210,ing:[['Fresas',105,'g','verd'],['Jamón serrano',50,'g','prot'],['Tortitas de arroz',15,'g','hidr']]},
+  {n:'Leche con proteína y Cocoa Pops',k:200,ing:[['Fresas',40,'g','verd'],['Choco Krispies',15,'g','hidr'],['Whey isolate',10,'g','desp'],['Crema de cacahuete',15,'g','gras']]},
+  {n:'Mugcake de avena y plátano al microondas',k:205,ing:[['Claras de huevo',55,'g','lact'],['Bebida de almendras',90,'g','lact'],['Plátano',30,'g','verd'],['Avena',15,'g','hidr'],['Crema de cacahuete',10,'g','gras'],['Whey hydro vainilla',5,'g','desp']]},
+  {n:'Avena con galletas',k:225,ing:[['Avena',15,'g','hidr'],['Galletas digestive',15,'g','desp'],['Crema de cacahuete',10,'g','gras'],['Whey isolate',10,'g','desp']]}
  ]
 };
 const CATS={prot:'Proteína',verd:'Fruta y verdura',hidr:'Hidratos',lact:'Lácteos y huevos',gras:'Grasas y frutos secos',desp:'Despensa'};
@@ -1460,6 +1590,69 @@ const COMBOS=[
  ['Cuerpo completo',['pecho','espalda','cuadriceps','core'],'Lo mejor si solo entrenas 2 o 3 días: cada músculo cae varias veces por semana'],
  ['Core y cardio',['core','cardio'],'Sesión ligera entre días duros, o para los días que vas justo de tiempo']
 ];
+let BLOQUE_EJ='pecho';
+function listaMia(d){ return (S.planEj&&S.planEj[d])||[]; }
+function guardarMia(d,lista){
+  S.planEj=S.planEj||{};
+  if(!lista.length){ delete S.planEj[d]; }
+  else{
+    S.planEj[d]=lista;
+    // los músculos del día salen de los ejercicios que has puesto
+    const bl=[]; lista.forEach(([n])=>{ const e=EJ[EJI[n]]; if(e&&!bl.includes(e.b)) bl.push(e.b); });
+    S.plan=S.plan||[[],[],[],[],[],[],[]];
+    S.plan[d]=bl;
+    S.rutina='plan';
+  }
+  guardar();
+}
+function abrirEjerciciosDia(d){
+  const lista=listaMia(d), auto=!lista.length;
+  const actual=lista.length?lista:((rutinaDePlan().ses.find(s=>s.n===nombreDia(d))||{}).ej||[]);
+  const pool=EJ.filter(e=>e.b===BLOQUE_EJ&&(!S.soloMio||tieneMaterial(e)))
+               .sort((x,y)=>(y.es||0)-(x.es||0));
+  $('#ejBody').innerHTML=`
+    <p class="eyebrow">Ejercicios de tu semana</p>
+    <h3 style="font-size:23px;margin:2px 0 10px">${DIAS[d]}</h3>
+    <p class="sub" style="margin:0 0 14px">${auto
+      ? 'Ahora los pone la app. En cuanto toques algo, este día pasa a ser tuyo y deja de cambiar solo.'
+      : 'Día tuyo: estos ejercicios se quedan tal cual hasta que los cambies.'}</p>
+    <div id="listaEj">${actual.length?actual.map(([n,s,r],p)=>{
+      const e=EJ[EJI[n]];
+      return `<div class="ej">
+        <button class="thumb" data-ej="${EJI[n]}" aria-label="Ver ${n}">${e?gif(e):''}</button>
+        <div class="ej-n"><b>${n}</b><small>${e?NOMBRE_BLOQUE[e.b]:''}</small>
+          <div class="chips" style="margin-top:6px">
+            <button class="chip" data-ejser="${d}|${p}|-1" aria-label="Menos series">−</button>
+            <span class="chip" aria-pressed="true">${s} series</span>
+            <button class="chip" data-ejser="${d}|${p}|1" aria-label="Más series">+</button>
+            <input class="chip" style="width:88px;text-align:center" data-ejreps="${d}|${p}" value="${r}" aria-label="Repeticiones">
+          </div>
+        </div>
+        <div class="ej-s" style="display:flex;flex-direction:column;gap:6px">
+          <button class="chip" data-ejmv="${d}|${p}|-1" aria-label="Subir">↑</button>
+          <button class="chip" data-ejmv="${d}|${p}|1" aria-label="Bajar">↓</button>
+          <button class="chip" data-ejdel="${d}|${p}" aria-label="Quitar">✕</button>
+        </div>
+      </div>`;}).join('')
+      :'<div class="vacio">Aún no hay ejercicios. Añade los que quieras abajo.</div>'}</div>
+    <p class="eyebrow" style="margin:18px 0 8px">Añadir ejercicio</p>
+    <div class="chips">${BLOQUES.map(([k,t])=>
+      `<button class="chip" data-ejbloque="${d}|${k}" aria-pressed="${BLOQUE_EJ===k}">${t}</button>`).join('')}</div>
+    <div style="margin-top:12px">${pool.length?pool.map(e=>
+      `<div class="ej">
+        <button class="thumb" data-ej="${EJI[e.n]}" aria-label="Ver ${e.n}">${gif(e)}</button>
+        <div class="ej-n"><b>${e.n}</b><small>${MATERIAL[e.eq]} · ${NIVEL[e.nv]}${respetaLimites(e)?'':' · carga una zona que has marcado'}</small></div>
+        <div class="ej-s"><button class="chip" data-ejadd="${d}|${EJI[e.n]}">Añadir</button></div>
+      </div>`).join('')
+      :'<div class="vacio">Con tu material no hay ejercicios de este bloque.</div>'}</div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      ${auto?'':`<button class="btn ghost" data-ejauto="${d}" style="flex:1">Volver a automático</button>`}
+      <button class="btn" id="cerrarEjDia" style="flex:1">Listo</button>
+    </div>`;
+  $('#ejModal').classList.add('on');
+  $('#cerrarEjDia').onclick=()=>{ $('#ejModal').classList.remove('on'); pintarRutina(); pintarHoy(); };
+}
+
 function abrirDia(i){
   const b=(S.plan&&S.plan[i])||[];
   const igual=(c)=>c.length===b.length&&c.every(x=>b.includes(x));
@@ -1583,6 +1776,7 @@ function pintarRutina(){
         <div class="dsem-pie">
           <button class="btn" data-empezar="${x.idx}">${hecho?'Repetir':'Empezar'}</button>
           ${editable?`<button class="btn ghost" data-plandia="${d}">Cambiar músculos</button>`:''}
+          ${editable?`<button class="btn ghost" data-editej="${d}">Elegir ejercicios</button>`:''}
           <button class="btn ghost" id="otrosEj${d}" data-otros="1">Otros ejercicios</button>
         </div>
       </div>
@@ -1608,6 +1802,14 @@ function abrirBiblioteca(){
       <div class="rut-t">Automática<span class="badge">sin pensar</span></div>
       <p class="rut-s">Se arma sola con tu objetivo, tus días y tu material.</p>
     </div>
+    ${(S.misRutinas||[]).length?`<p class="eyebrow" style="margin:20px 0 8px">Mis rutinas</p>
+    ${S.misRutinas.map(x=>`
+      <div class="rut-card${S.rutina===x.k?' sel':''}" data-rut="${x.k}">
+        <div class="rut-t">${x.n}<span class="badge">tuya</span></div>
+        <p class="rut-s">${x.s}</p>
+        <p class="rut-e">${x.ses.length} sesiones · <button class="chip" data-delrut="${x.k}">Borrar</button></p>
+      </div>`).join('')}`:''}
+    ${diasConPlan()?`<button class="btn ghost" data-guardarut="1" style="width:100%;margin-top:14px">Guardar mi semana como rutina</button>`:''}
     <p class="eyebrow" style="margin:20px 0 8px">Montar mi semana de golpe</p>
     <div class="chips" style="margin-bottom:18px">
       <button class="chip" data-plantilla="full">Cuerpo completo · 3</button>
@@ -1914,6 +2116,62 @@ document.addEventListener('click',e=>{
   if(fr){ S.filtroRut=fr.dataset.frut; guardar(); abrirBiblioteca(); return; }
   const dx=e.target.closest('[data-diaexp]');
   if(dx){ const d=+dx.dataset.diaexp; DIA_ABIERTO=DIA_ABIERTO===d?null:d; pintarRutina(); return; }
+  const ee=e.target.closest('[data-editej]');
+  if(ee){ abrirEjerciciosDia(+ee.dataset.editej); return; }
+  const eb=e.target.closest('[data-ejbloque]');
+  if(eb){ const [d,k]=eb.dataset.ejbloque.split('|'); BLOQUE_EJ=k; abrirEjerciciosDia(+d); return; }
+  const ea=e.target.closest('[data-ejadd]');
+  if(ea){
+    const [d,idx]=ea.dataset.ejadd.split('|').map(Number);
+    const x=EJ[idx], esq=ESQUEMA[S.perfil.objetivo];
+    const suave=x.b==='cardio'||x.b==='core';
+    const l=[...listaMia(d)];
+    if(!l.some(([n])=>n===x.n)) l.push([x.n, esq.s, suave?(x.b==='cardio'?'40 s':'30-45 s'):esq.r]);
+    guardarMia(d,l); abrirEjerciciosDia(d); pintarRutina(); return;
+  }
+  const ed=e.target.closest('[data-ejdel]');
+  if(ed){
+    const [d,p]=ed.dataset.ejdel.split('|').map(Number);
+    const l=[...listaMia(d)]; l.splice(p,1);
+    guardarMia(d,l); abrirEjerciciosDia(d); pintarRutina(); return;
+  }
+  const em=e.target.closest('[data-ejmv]');
+  if(em){
+    const [d,p,dir]=em.dataset.ejmv.split('|').map(Number);
+    const l=[...listaMia(d)], q=p+dir;
+    if(q>=0&&q<l.length){ [l[p],l[q]]=[l[q],l[p]]; guardarMia(d,l); abrirEjerciciosDia(d); pintarRutina(); }
+    return;
+  }
+  const es=e.target.closest('[data-ejser]');
+  if(es){
+    const [d,p,dl]=es.dataset.ejser.split('|').map(Number);
+    const l=[...listaMia(d)];
+    if(l[p]){ l[p]=[l[p][0], Math.min(8,Math.max(1,l[p][1]+dl)), l[p][2]]; guardarMia(d,l); abrirEjerciciosDia(d); pintarRutina(); }
+    return;
+  }
+  const eu=e.target.closest('[data-ejauto]');
+  if(eu){
+    const d=+eu.dataset.ejauto;
+    guardarMia(d,[]); abrirEjerciciosDia(d); pintarRutina(); pintarHoy();
+    toast('Este día vuelve a montarse solo'); return;
+  }
+  const gr=e.target.closest('[data-guardarut]');
+  if(gr){
+    const r=rutinaDePlan();
+    if(!r.ses.length){ toast('Primero monta tu semana'); return; }
+    const n=(prompt('Nombre de la rutina','Mi semana')||'').trim()||'Mi semana';
+    S.misRutinas=S.misRutinas||[];
+    S.misRutinas.push({k:'mia'+Date.now(), n, s:r.ses.length+' días · guardada por ti', nv:2,
+      tags:['mía'], eq:S.perfil.equipo.slice(), ses:r.ses.map(x=>({n:x.n, ej:x.ej.map(y=>[...y])}))});
+    guardar(); abrirBiblioteca(); toast('Rutina guardada'); return;
+  }
+  const dr=e.target.closest('[data-delrut]');
+  if(dr){
+    const k=dr.dataset.delrut;
+    S.misRutinas=(S.misRutinas||[]).filter(x=>x.k!==k);
+    if(S.rutina===k) S.rutina='plan';
+    guardar(); abrirBiblioteca(); pintarRutina(); pintarHoy(); toast('Rutina borrada'); return;
+  }
   const ot=e.target.closest('[data-otros]');
   if(ot){ S.seedR++; guardar(); pintarRutina(); pintarHoy(); toast('Ejercicios cambiados'); return; }
   const rt=e.target.closest('[data-rut]');
@@ -1943,6 +2201,12 @@ document.addEventListener('click',e=>{
 
 document.addEventListener('input',e=>{
   const t=e.target, p=S.perfil;
+  if(t.dataset&&t.dataset.ejreps){
+    const [d,pos]=t.dataset.ejreps.split('|').map(Number);
+    const l=[...listaMia(d)];
+    if(l[pos]){ l[pos]=[l[pos][0], l[pos][1], t.value||'10']; guardarMia(d,l); pintarRutina(); }
+    return;
+  }
   if(t.id==='f-nombre'){
     p.nombre=t.value;
     const a=document.querySelector('.avatar');
