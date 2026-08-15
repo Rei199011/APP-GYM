@@ -434,6 +434,17 @@ input[type=range]{width:100%;accent-color:var(--p-blue);background:none;border:0
   z-index:90;transition:transform .3s cubic-bezier(.2,1.3,.4,1);box-shadow:0 8px 30px rgba(0,0,0,.5)
 }
 #toast.on{transform:translate(-50%,0)}
+#atras{
+  position:fixed;left:14px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:100;
+  display:none;align-items:center;gap:7px;padding:12px 18px 12px 14px;
+  background:rgba(20,24,31,.94);backdrop-filter:blur(10px);
+  border:1px solid var(--line);border-radius:999px;color:var(--ink);
+  font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer;
+  box-shadow:0 8px 26px rgba(0,0,0,.45);transition:transform .15s
+}
+#atras.on{display:flex}
+#atras:active{transform:scale(.95)}
+#atras b{font-size:19px;line-height:1;margin-top:-2px}
 #lb{position:fixed;inset:0;background:rgba(10,12,16,.92);display:none;align-items:center;justify-content:center;z-index:95;padding:24px}
 #lb.on{display:flex}
 #lb img{max-width:100%;max-height:88vh;border-radius:12px}
@@ -620,6 +631,7 @@ input[type=range]{width:100%;accent-color:var(--p-blue);background:none;border:0
 <div class="modal" id="ejModal" role="dialog" aria-modal="true">
   <div class="modal-in"><button class="x" id="cerrarEj" aria-label="Cerrar">×</button><div id="ejBody"></div></div>
 </div>
+<button id="atras" aria-label="Volver atrás"><b>&lsaquo;</b>Atrás</button>
 <div id="toast"></div>
 <div id="lb"><img alt="Foto de progreso"></div>
 
@@ -2013,10 +2025,58 @@ function pintarMini(){
 /* =========================================================
    5. EVENTOS
    ========================================================= */
-$$('.tab').forEach(t=>t.onclick=()=>{
-  $$('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));
-  $$('.panel').forEach(p=>p.classList.toggle('on',p.id==='p-'+t.dataset.p));
+/* ---------- atrás: deshace el último paso que diste ---------- */
+let NAV=[];
+function panelActual(){ const p=document.querySelector('.panel.on'); return p?p.id.slice(2):'hoy'; }
+function subActual(panel){ const s=document.querySelector('#p-'+panel+' .subpanel.on'); return s?s.dataset.sub:null; }
+function irPanel(p){
+  $$('.tab').forEach(x=>x.setAttribute('aria-selected',x.dataset.p===p));
+  $$('.panel').forEach(x=>x.classList.toggle('on',x.id==='p-'+p));
   window.scrollTo({top:0,behavior:'smooth'});
+}
+function irSub(panel,sub){
+  const c=$('#p-'+panel); if(!c) return;
+  [...c.querySelectorAll('.subtab')].forEach(x=>x.setAttribute('aria-pressed',x.dataset.sub===sub));
+  [...c.querySelectorAll('.subpanel')].forEach(x=>x.classList.toggle('on',x.dataset.sub===sub));
+}
+function apilar(e){ NAV.push(e); if(NAV.length>40) NAV.shift(); pintarAtras(); }
+// las ventanas van de la de más arriba a la de más abajo
+function capaAbierta(){
+  for(const id of ['lb','onb','player','ejModal']){ const el=$('#'+id); if(el&&el.classList.contains('on')) return id; }
+  return null;
+}
+function hayAtras(){
+  const c=capaAbierta();
+  if(c==='onb') return ONB>0;
+  return !!c||NAV.length>0;
+}
+function pintarAtras(){ const b=$('#atras'); if(b) b.classList.toggle('on',hayAtras()); }
+function atras(){
+  const capa=capaAbierta();
+  if(capa==='lb'){ $('#lb').classList.remove('on'); pintarAtras(); return; }
+  if(capa==='onb'){ if(ONB>0){ ONB--; pintarOnb(); } pintarAtras(); return; }
+  if(capa==='player'){
+    if(PL.i>0){ PL.i--; pintarPlayer(); }
+    else if(Object.keys(PL.hechas).length===0||confirm('¿Salir sin registrar el entreno?')) cerrarPlayer();
+    pintarAtras(); return;
+  }
+  if(capa==='ejModal'){
+    $('#ejModal').classList.remove('on'); pintarRutina(); pintarHoy(); pintarAtras(); return;
+  }
+  const e=NAV.pop();
+  if(e&&e.t==='panel') irPanel(e.p);
+  else if(e&&e.t==='sub'){ irPanel(e.panel); irSub(e.panel,e.sub); }
+  pintarAtras();
+}
+$('#atras').onclick=atras;
+// el botón aparece y desaparece según dónde estés
+setInterval(pintarAtras,400);
+
+$$('.tab').forEach(t=>t.onclick=()=>{
+  const p=panelActual();
+  if(p!==t.dataset.p) apilar({t:'panel',p});
+  irPanel(t.dataset.p);
+  pintarAtras();
 });
 
 
@@ -2278,9 +2338,12 @@ $('#addReg').onclick=()=>{
   } else meter();
 };
 $$('.subtab').forEach(b=>b.onclick=()=>{
+  const panel=panelActual(), antes=subActual(panel);
+  if(antes&&antes!==b.dataset.sub) apilar({t:'sub',panel,sub:antes});
   const nav=b.parentElement;
   [...nav.children].forEach(x=>x.setAttribute('aria-pressed',x===b));
   [...nav.parentElement.querySelectorAll('.subpanel')].forEach(s=>s.classList.toggle('on',s.dataset.sub===b.dataset.sub));
+  pintarAtras();
 });
 $('#plCerrar').onclick=()=>{ if(Object.keys(PL.hechas).length===0||confirm('¿Salir sin registrar el entreno?')) cerrarPlayer(); };
 document.addEventListener('click',e=>{ if(e.target.id==='plFin') terminarEntreno(); });
@@ -2289,7 +2352,7 @@ $('#lb').onclick=()=>$('#lb').classList.remove('on');
 $('#cerrarEj').onclick=()=>$('#ejModal').classList.remove('on');
 $('#ejModal').onclick=e=>{if(e.target.id==='ejModal')$('#ejModal').classList.remove('on');};
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){$('#lb').classList.remove('on');$('#ejModal').classList.remove('on');}
+  if(e.key==='Escape'){ atras(); }
 });
 
 /* =========================================================

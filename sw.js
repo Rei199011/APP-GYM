@@ -1,7 +1,7 @@
 /* Service worker de Sala de Máquinas.
    Guarda la app en el móvil para que funcione sin conexión.
    Al publicar una versión nueva, cambia el número de CACHE. */
-const CACHE = 'sala-de-maquinas-v3';
+const CACHE = 'sala-de-maquinas-v4';
 const ARCHIVOS = ['./', './index.html', './manifest.webmanifest', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
