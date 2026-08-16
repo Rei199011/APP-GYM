@@ -1,6 +1,6 @@
 {
-  "name": "Sala de Máquinas",
-  "short_name": "Sala",
+  "name": "Gym Planta Vieja",
+  "short_name": "Gym PV",
   "description": "Entrenamiento en casa: rutinas, dieta, compra y progreso",
   "start_url": "./index.html",
   "scope": "./",

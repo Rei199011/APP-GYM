@@ -6,12 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sala de Máquinas">
+<meta name="apple-mobile-web-app-title" content="Gym Planta Vieja">
 <meta name="theme-color" content="#14181F">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" href="icon-180.png">
 <link rel="manifest" href="manifest.webmanifest">
-<title>Sala de Máquinas — entrenamiento en casa</title>
+<title>Gym Planta Vieja — entrenamiento en casa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -385,6 +385,8 @@ input[type=range]{width:100%;accent-color:var(--p-blue);background:none;border:0
 .macro{background:var(--surface2);border-radius:10px;padding:12px;text-align:center;border-top:3px solid var(--c,var(--p-green))}
 .macro b{display:block;font-family:var(--display);font-size:25px;line-height:1}
 .macro small{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.comida[data-plato]{cursor:pointer}
+.comida[data-plato]:active{background:var(--surface2)}
 .comida{display:flex;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)}
 .comida:last-child{border-bottom:0}
 .comida .t{font-family:var(--mono);font-size:11px;color:var(--muted);width:74px;flex:none;padding-top:3px;text-transform:uppercase;letter-spacing:.06em}
@@ -455,7 +457,7 @@ input[type=range]{width:100%;accent-color:var(--p-blue);background:none;border:0
 
 <header class="top">
   <div class="top-in">
-    <div class="brand"><i></i><span>Sala de Máquinas</span></div>
+    <div class="brand"><i></i><span>Gym Planta Vieja</span></div>
     <div class="semana">
       <span id="semTxt">0/0 esta semana</span>
       <div class="mini-bar" id="miniBar"></div>
@@ -1389,6 +1391,157 @@ const COMIDAS={
   {n:'Avena con galletas',k:225,ing:[['Avena',15,'g','hidr'],['Galletas digestive',15,'g','desp'],['Crema de cacahuete',10,'g','gras'],['Whey isolate',10,'g','desp']]}
  ]
 };
+const PASOS={
+/* --- las 28 de siempre --- */
+'Avena con plátano y crema de cacahuete':['Calienta la leche con los copos de avena 2-3 min sin dejar de remover, hasta que espese.','Sírvela en un bol con el plátano en rodajas y la crema de cacahuete por encima.'],
+'Tostadas integrales con huevo y aguacate':['Tuesta el pan.','Haz los huevos a la plancha o revueltos con unas gotas de aceite.','Machaca el aguacate con sal, úntalo en el pan y pon el huevo encima.'],
+'Yogur griego con frutos rojos y nueces':['Pon el yogur en un bol.','Lava los frutos rojos y añádelos con las nueces troceadas.','Termina con un hilo de miel.'],
+'Tortilla de claras con pavo y tomate':['Bate las claras con sal y pimienta.','Cuájalas en una sartén antiadherente y añade el pavo troceado antes de doblarla.','Acompaña con el tomate en rodajas y el pan tostado.'],
+'Batido de avena, plátano y proteína':['Tritura la leche con la avena, el plátano y la proteína unos 30 segundos.','Añade agua o hielo si lo quieres más ligero.'],
+'Requesón con fruta y semillas':['Pon el requesón en un bol con la manzana en dados.','Espolvorea las semillas de chía y acompaña con el pan tostado.'],
+'Revuelto de huevo con espinacas':['Saltea las espinacas con el aceite hasta que pierdan el agua.','Añade los huevos batidos y remueve a fuego medio hasta que cuajen.','Sirve con el pan tostado.'],
+'Pollo a la plancha con arroz y brócoli':['Cuece el arroz según el paquete.','Hierve o cocina al vapor el brócoli 5-6 min.','Haz el pollo a la plancha con el aceite, salpimenta y sirve todo junto.'],
+'Salmón al horno con patata y espárragos':['Precalienta el horno a 200°C.','Corta la patata en rodajas finas y hornéala 20 min con un poco de aceite.','Añade el salmón y los espárragos y hornea 10-12 min más.'],
+'Lentejas con verduras':['Pocha la cebolla, la zanahoria y el pimiento en dados con el aceite.','Añade las lentejas y agua o caldo hasta cubrir.','Cocina a fuego medio 25-30 min y rectifica de sal.'],
+'Ternera salteada con quinoa y pimientos':['Cuece la quinoa 12-15 min y escúrrela.','Saltea el pimiento y la cebolla a fuego fuerte.','Añade la ternera en tiras, dórala 3-4 min y mézclalo todo.'],
+'Pasta integral con atún y tomate':['Cuece la pasta al dente.','Calienta el tomate triturado con el aceite y una pizca de sal.','Añade el atún escurrido, mezcla con la pasta y sirve.'],
+'Garbanzos con espinacas y huevo':['Saltea las espinacas con el aceite y un diente de ajo.','Añade los garbanzos escurridos y rehoga 5 min.','Corona con los huevos a la plancha o escalfados.'],
+'Pavo con boniato y ensalada':['Asa el boniato en dados 25-30 min a 200°C, o 20 min en air fryer.','Haz el pavo a la plancha.','Monta la ensalada de lechuga y tomate y aliña con el aceite.'],
+'Merluza al horno con verduras':['Precalienta el horno a 190°C.','Pon el calabacín y la cebolla en rodajas en la bandeja con el aceite y hornea 15 min.','Coloca la merluza encima y hornea 10-12 min más.'],
+'Revuelto de pavo y champiñones':['Saltea los champiñones laminados hasta que suelten el agua.','Añade el pavo troceado y dóralo.','Echa los huevos batidos y remueve hasta que cuajen.'],
+'Pollo con ensalada y aguacate':['Haz el pollo a la plancha y salpimenta.','Trocea la lechuga, el tomate y el aguacate.','Aliña con el aceite y sirve el pollo encima.'],
+'Crema de calabacín con tofu a la plancha':['Cuece el calabacín y el puerro 15 min en agua con sal.','Tritura hasta que quede fino.','Dora el tofu en dados a la plancha y sírvelo sobre la crema.'],
+'Ensalada de atún, huevo y alubias':['Cuece los huevos 10 min y enfríalos.','Mezcla la lechuga con las alubias y el atún escurridos.','Añade el huevo en cuartos y aliña con el aceite.'],
+'Salteado de gambas con verduras':['Saltea el pimiento y el calabacín en dados a fuego fuerte.','Añade las gambas y cocínalas 2-3 min.','Salpimenta y sirve enseguida.'],
+'Tortilla de patata ligera con ensalada':['Cocina la patata y la cebolla en dados 7 min al microondas, o pochadas en la sartén.','Mézclalas con los huevos batidos y cuaja la tortilla.','Acompaña con la ensalada aliñada.'],
+'Yogur natural con almendras':['Pon el yogur en un bol y añade las almendras troceadas.'],
+'Fruta y queso fresco':['Trocea la manzana y mézclala con el queso fresco batido.'],
+'Batido de proteína con leche':['Bate la proteína con la leche hasta que no queden grumos.'],
+'Tostada con pavo':['Tuesta el pan y pon encima las lonchas de pavo.'],
+'Puñado de frutos secos y fruta':['Come las nueces junto al plátano.'],
+'Tortitas de arroz con crema de cacahuete':['Unta las tortitas de arroz con la crema de cacahuete.'],
+'Requesón con miel':['Pon el requesón en un bol y riégalo con la miel.'],
+
+/* --- desayunos del plan --- */
+'Bocadillo de jamón y fruta':['Tuesta el pan y restriega el tomate.','Añade el jamón.','Come la fruta aparte.'],
+'Yogur con fruta, cereales, crema de cacahuete y coco':['Corta el plátano en rodajas y las fresas en trozos.','Mézclalos con el yogur.','Añade los cereales, la crema de cacahuete y el coco rallado.'],
+'Queso cottage con tortitas de maíz, pavo y huevo':['Mezcla el queso con una pizca de sal y el aceite.','Añade el pavo desmenuzado y el huevo (revuelto, cocido o a la plancha).','Trocea las tortitas y remueve con la mezcla. Come la fruta aparte.'],
+'Batido de plátano y chocolate':['Bate todos los ingredientes hasta que quede cremoso.','Añade agua o hielo si lo quieres más fino.'],
+'Tostadas con huevos revueltos y salmón ahumado':['Tuesta el pan.','Haz las claras y el huevo revueltos con un poco de aceite.','Sirve con el salmón y come la fruta aparte.'],
+'Yogur griego con avena y frutas del bosque':['Mezcla el yogur con la avena, la proteína y las semillas de chía.','Lava las frutas del bosque y cúbrelo todo con ellas y las almendras.'],
+'Gachas de avena con cacao, crema de cacahuete y plátano':['Lleva a ebullición la avena con la bebida vegetal, las claras, el cacao y una pizca de sal.','Baja el fuego y cocina 5-8 min removiendo.','Deja templar, mezcla la proteína y cubre con la crema de cacahuete y el plátano.'],
+'Pan tumaca con lomo embuchado y queso manchego':['Ralla el tomate y salpimenta.','Tuesta el pan y restriega el ajo por encima.','Cubre con el tomate, el queso y el lomo.'],
+'Tortitas de avena con arándanos':['Mezcla la avena con la proteína, las claras y el aceite de coco derretido.','Cuaja cucharadas de masa en la sartén y dales la vuelta cuando salgan burbujas.','Sirve con los arándanos y el kiwi.'],
+'Pan con queso cottage y salmón ahumado':['Tuesta el pan.','Úntalo con el queso cottage y cubre con el salmón.','Acompaña con los arándanos.'],
+'Tostadas de jamón':['Tuesta el pan y restriega el tomate con un hilo de aceite.','Añade el jamón y come la fruta aparte.'],
+'Gachas de avena proteicas':['Cuece la avena con la bebida de soja y las frambuesas 3 min removiendo.','Retira del fuego y añade la proteína poco a poco.','Cubre con el plátano, las fresas y la crema de cacahuete.'],
+'Smoothie con plátano, granola y dátiles':['Bate todos los ingredientes unos 30 segundos, hasta que quede cremoso.','Añade agua o hielo si lo quieres más fino.'],
+'Huevos revueltos y bacon con tostadas':['Dora el bacon en la sartén.','Bate los huevos con las claras y cuájalos removiendo 2-3 min.','Sirve con el pan tostado y la fruta aparte.'],
+'Leche con proteína y Choco Krispies':['Mezcla la bebida vegetal con la proteína hasta que no queden grumos.','Viértela sobre los cereales y añade las nueces y el plátano.'],
+'Bocadillo de tortilla, queso y tomate':['Bate el huevo con las claras y haz una tortilla francesa.','Tuesta el pan y corta el tomate en rodajas.','Monta el bocadillo con el queso, el tomate y la tortilla. Fruta aparte.'],
+'Smoothie de frutas y coco':['Bate todos los ingredientes con un poco de agua o bebida vegetal unos 30 segundos.','Sírvelo en un vaso.'],
+'Yogur con avena, dátiles y frutas del bosque':['Mezcla el yogur con la avena.','Cubre con los frutos del bosque, los dátiles troceados y la crema de cacahuete.'],
+'Gachas de avena con cacao, avellanas y plátano':['Cuece la avena con la bebida de almendras, las claras y el cacao 3 min removiendo.','Mezcla la proteína fuera del fuego.','Cubre con la crema de avellanas y el plátano en rodajas.'],
+'Crepes de avena salados':['Bate el huevo con la harina de avena hasta tener una masa fina.','Cuaja los crepes; antes de sacarlos pon el pavo y el queso y dóblalos para que funda.','Come la fruta aparte.'],
+'Bocadillo de jamón':['Tuesta el pan, restriega un poco de tomate y añade el jamón.','Come la fruta aparte.'],
+'Tortitas con arándanos':['Mezcla la harina con la proteína, las claras y un chorrito de bebida vegetal.','Cuaja cucharadas de masa y dales la vuelta cuando salgan burbujas.','Sirve con la crema de cacahuete y los arándanos.'],
+'Bagel con huevos revueltos y pavo':['Abre el bagel por la mitad y tuéstalo.','Revuelve el huevo y las claras a fuego medio.','Saltea las espinacas y monta el bagel con el huevo, el tomate y el pavo.'],
+'Huevos a la plancha con bacon y tostadas':['Fríe el bacon hasta que esté crujiente.','Haz los huevos a la plancha unos 3 min.','Sirve con el pan tostado y la fruta aparte.'],
+'Crema protéica de arroz':['Mezcla los polvos y añade la bebida vegetal poco a poco hasta que quede tipo crema.','Añade el plátano en trocitos y la crema de cacahuete.'],
+'Crepes con crema de cacahuete, fresas y plátano':['Bate las claras con la proteína y la avena.','Cuaja los crepes en la sartén con un poco de spray o aceite.','Rellénalos con la crema de cacahuete, las fresas y el plátano.'],
+'Tostadas de aguacate con atún':['Mezcla el atún con el aguacate machacado y una pizca de sal.','Úntalo sobre el pan tostado.','Come la fruta aparte.'],
+
+/* --- comidas del plan --- */
+'Hamburguesas de pollo y patatas':['Horno a 200°C: corta la patata en gajos y dórala.','Haz la hamburguesa a la plancha y después el huevo.','Monta el pan con la hamburguesa, el huevo y el queso, y acompaña con las patatas.'],
+'Bocadillo de pollo, queso y aguacate':['Tuesta el pan.','Haz el pollo a la plancha.','Monta el bocadillo con el pollo, el queso y el aguacate. Come la fruta aparte.'],
+'Wrap de salmón y aguacate':['Salpimenta el salmón y hazlo unos minutos por cada lado, hasta que se desmenuce.','Lamina el aguacate y trocea la lechuga y los tomates.','Monta el wrap con todo dentro y dóblalo.'],
+'Arroz con huevo y pollo + dátiles':['Cuece el arroz o usa un vasito de microondas.','Haz el pollo y el huevo a la plancha.','Mézclalo con el arroz. Los dátiles, aparte o sofritos con un poco de ajo antes de echar el arroz.'],
+'Pollo a la plancha con ensalada de tomate y aguacate':['Haz el pollo a la plancha.','Mezcla el tomate, los garbanzos y el aguacate y aliña con aceite y sal.','Sirve con el pan o las tortitas.'],
+'Hamburguesas de pavo y pasta integral':['Cuece la pasta.','Especia la carne de pavo, forma las hamburguesas y hazlas a la plancha.','Sirve con la pasta y los canónigos aliñados.'],
+'Taco bowl con carne picada de ternera':['Cuece el arroz.','Sofríe la cebolla y el ajo, añade la carne y el maíz y sazona con el condimento para tacos.','Monta el bol con el arroz, las alubias, la carne, el tomate y el queso.'],
+'Tortilla de patata y pollo':['Cocina la patata en trozos 7 min al microondas y dórala en la sartén.','Bate los huevos con las claras, mézclalos con la patata y cuaja la tortilla.','Haz el pollo a la plancha y acompaña con el pan.'],
+'Taco bowl con arroz y pollo':['Cuece el arroz.','Trocea la verdura y escurre el maíz.','Fríe el pollo en dados con la cebolla y las especias, y monta el bol con todo y el queso.'],
+'Gazpacho con ensalada de patata y atún':['Mezcla la patata troceada con el atún, el queso cottage, el huevo picado y el maíz.','Aliña y acompaña con las tortitas.','Sirve el gazpacho en un vaso.'],
+'Hamburguesas de ternera a la plancha con patatas':['Especia la carne y forma una o dos hamburguesas.','Hazlas a la plancha con una gota de aceite.','Cocina las patatas en air fryer, horno o cocidas, y sirve con el queso por encima y el pan.'],
+'Gnocchis con feta y pollo':['Sofríe la cebolla y los champiñones con el pollo troceado.','Añade los gnocchi y la salsa de tomate.','Fuera del fuego añade el feta y acompaña con el pan.'],
+'Salmón con arroz y verduras':['Cuece el arroz.','Haz el salmón a fuego medio hasta que se dore y se desmenuce.','Cocina los espárragos y las judías en air fryer y sirve todo junto.'],
+'Arroz con pollo y garbanzos':['Cuece el arroz o usa un vasito de microondas.','Haz el pollo a la plancha y después el huevo.','Mezcla todo con los garbanzos y añade el aceite en crudo.'],
+'Ñoquis con carne picada y champiñones':['Haz los ñoquis en air fryer 12 min a 200°C, en horno o en sartén.','Pocha la cebolla y los champiñones con sal, añade la carne picada y rehoga.','Haz el huevo aparte, emplata y acompaña con el pan.'],
+'Hamburguesa casera':['Corta la patata en bastones y hazla en horno o air fryer 15 min a 180°C.','Haz la hamburguesa a la plancha y después el huevo.','Tuesta el pan y monta con la lechuga, el tomate, el queso y la cebolla.'],
+'Pescado a la plancha con arroz y verduras':['Sofríe el ajo con los champiñones y los guisantes.','Haz el pescado en la misma sartén y después el huevo.','Cuece el arroz y sirve con el pan.'],
+'Bowl de pollo crispy':['Machaca los corn flakes y reboza el pollo cortado en tiras.','Hazlo en air fryer hasta que se dore y cocina el huevo a la plancha.','Monta el bol con el arroz, el tomate, el aguacate y el pollo, y aliña al gusto.'],
+'Salteado rápido de verduras y salmón':['Salpimenta el salmón y hazlo a fuego medio-alto por ambos lados.','Saltea las verduras congeladas y condimenta con salsa de soja.','Sirve con el wrap y el queso.'],
+'Guiso de lentejas':['Saltea la cebolla y el pollo en dados con el aceite.','Añade la calabaza, la zanahoria y el tomate con ajo y especias, y cocina 30-40 min.','Incorpora las lentejas cocidas y deja 10 min más.'],
+'Ensalada de pasta con atún':['Cuece la pasta y déjala enfriar.','Pica la lechuga, el tomate, la zanahoria y el huevo.','Mezcla con el atún, el queso y la mayonesa, y aliña con vinagre y sal.'],
+'Poke bowl de pollo':['Cuece el arroz o haz un vasito al microondas.','Haz el pollo a la plancha y déjalo enfriar.','Monta el bol con el arroz, el maíz, la fruta, el queso y el pollo. Aliña con la mayonesa, la soja y el sésamo.'],
+'Bocadillo de ternera con queso':['Tuesta el pan.','Haz la ternera a la plancha.','Monta el bocadillo untando un poco de tomate, el queso y la carne.'],
+'Pasta con gambas y aguacate':['Cuece la pasta al dente.','Sofríe la cebolla y la calabaza en dados, añade las gambas y rehoga.','Mezcla con la pasta, añade el aguacate y aliña con aceite, queso y limón.'],
+'Pescado a la plancha con ñoquis y verduras':['Sofríe el ajo con los champiñones y el brócoli y resérvalo.','Haz los ñoquis a la plancha en la misma sartén, o en air fryer.','Cocina el pescado y sirve todo con el pan.'],
+'Paella con pollo':['Sofríe el ajo, la cebolla, el pimiento y la zanahoria con las especias unos 15 min.','Añade el tomate rallado, cocina 3 min y retira el sofrito. Dora el pollo.','Incorpora el arroz y el sofrito y añade el doble de caldo bien caliente.','Cocina 18-20 min a fuego bajo sin remover y deja reposar 5 min.'],
+
+/* --- cenas del plan --- */
+'Lubina con verdura':['Pocha la cebolla y los champiñones y añade la patata troceada.','Haz el pescado en otra sartén.','Sirve el pescado con la verdura y las tortitas.'],
+'Crema de calabaza con pollo':['Haz el pollo a la plancha y sálalo.','Calienta la crema de calabaza.','Añade el pollo, los garbanzos, el queso y los picatostes.'],
+'Gnocchi con pollo, verduras y huevo':['Haz los gnocchi en air fryer unos 12 min, hasta que se doren.','Pocha la cebolla, las judías y los champiñones y añade el pollo troceado.','Haz el huevo a la plancha y emplata.'],
+'Quesadilla de pollo y espinacas':['Calienta la tortita en la sartén por un lado.','Dale la vuelta y pon el pollo, la manzana picada, el maíz, las espinacas y el queso.','Dobla y cocina 2 min hasta que funda el queso.'],
+'Paninis prosciutto':['Abre el pan por la mitad y úntalo con el tomate triturado.','Añade los cherris, la mozzarella, el queso rallado y el pavo.','Hornea 10 min a 180°C, en air fryer o en microondas, y espolvorea orégano.'],
+'Poke bowl de salmón con aguacate':['Corta el salmón en dados y déjalo marinar 10-15 min con vinagre de arroz y sal.','Hazlo un minuto por cada lado y déjalo reposar 5 min.','Monta el bol con la quinoa, la verdura, el mango, el salmón y los quesos. Acompaña con las tortitas.'],
+'Sándwich de pollo y hummus':['Salpimenta el pollo, córtalo en trozos y fríelo 5-7 min.','Tuesta el pan y úntalo con la mayonesa y el hummus.','Monta el sándwich con el pollo, la manzana laminada, el tomate y la lechuga.'],
+'Pollo KFC con patatas fritas y huevo':['Corta el pavo en tiras y rebózalo presionando con los corn flakes; no hace falta huevo.','Hazlo en air fryer hasta que se dore.','Corta las patatas en gajos, sécalas y fríelas 15-20 min en air fryer. Haz el huevo aparte.'],
+'Ensalada de queso de cabra y pollo':['Haz el pavo a la plancha.','Monta la ensalada con la lechuga, el tomate, la zanahoria rallada, el maíz, las pasas y los picatostes.','Añade el pavo y el queso de cabra y aliña con aceite y sal.'],
+'Bowl con pollo, huevo y boniato':['Hierve el boniato 15-30 min y dóralo en sartén o air fryer.','Salpimenta el pollo y hazlo unos 10 min por ambos lados.','Monta el bol con el pollo, el boniato, la zanahoria rallada, el huevo y el aguacate. Aliña con balsámico.'],
+'Wraps de lechuga de atún y aguacate':['Machaca el aguacate y mézclalo con el atún, la patata troceada y la manzana.','Rellena las hojas de lechuga y enróllalas.','Come la mezcla que sobre con las tortitas.'],
+'Patata al horno con ensalada ligera de atún':['Pincha la patata y hazla 10 min al microondas, dándole la vuelta a mitad.','Hornéala 15-25 min o pásala por air fryer para que se tueste.','Mezcla el atún, el maíz, el yogur y el cebollino y rellena la patata con la mantequilla.'],
+'Tortilla de calabacín y setas':['Rehoga la cebolla con las setas y el calabacín.','Bate el huevo con las claras, añade la verdura y mezcla.','Cuaja la tortilla y acompaña con el pan.'],
+'Pollo KFC con boniato':['Corta el pavo en tiras y rebózalo con los corn flakes.','Hazlo en air fryer hasta que esté dorado.','Cocina el boniato en air fryer, sartén, microondas o en puré.'],
+'Puré de verdura y pollo a la plancha':['Hierve la verdura o hazla al vapor en el microondas.','Rehógala con la patata para que coja sabor y tritúrala con un poco de caldo o bebida vegetal.','Haz el pollo a la plancha y sirve todo junto.'],
+'Sopa de fideos con pollo':['Cuece los huevos y resérvalos.','Dora el pollo con el tomillo en la olla, añade la zanahoria en rodajas y agua hasta cubrir.','Echa la pasta cuando la zanahoria esté al dente y sirve con los picatostes y el queso.'],
+'Patatas fritas de boniato y pechuga de pollo':['Horno a 200°C: corta el boniato en bastones y hornéalo 30 min, o 20-25 min en air fryer.','Salpimenta el pollo y hazlo unos 10 min por ambos lados.','Sirve con el aguacate troceado y las tortitas.'],
+'Puré de verduras con pescado a la plancha':['Pocha la cebolla, el puerro, el calabacín y la calabaza unos 10 min.','Añade caldo y cuece 10 min más. Tritura con la patata y el queso crema.','Haz el pescado a la plancha y sirve con el puré y el pan.'],
+'Lubina a la plancha con zanahorias':['Haz la lubina a la plancha con una gota de aceite y las especias que quieras.','Corta las zanahorias en bastones y fríelas hasta que estén tiernas y doradas.','Calienta el arroz y sirve con las tortitas.'],
+
+/* --- media mañana, meriendas y postres del plan --- */
+'Tortitas de arroz con crema de cacahuete, mermelada y batido de proteína':['Cubre las tortitas con la crema de cacahuete y la mermelada.','Bebe aparte la bebida de avena mezclada con la proteína.'],
+'Tostada con tomate rallado y atún':['Ralla el tomate y aliña con un chorrito de aceite y sal.','Tuesta el pan y cúbrelo con el tomate y el atún escurrido.'],
+'Pan crujiente con hummus y lonchas de pavo':['Unta el hummus en el pan crujiente.','Cúbrelo con las lonchas de pavo.'],
+'Yopro con cereales y crema de cacahuete':['Pon el yogur en un bol.','Añade los cereales y la crema de cacahuete y cómelo todo junto.'],
+'Yogur con Choco Krispies':['Mezcla el yogur con la proteína.','Añade los cereales y el plátano troceado.'],
+'Barrita y fruta':['Come la barrita con la fruta y el chocolate o la crema de cacahuete.'],
+'Tortitas de arroz con lomo y nueces':['Monta las tortitas con el lomo.','Come las nueces aparte.'],
+'Smoothie con plátano y dátiles':['Bate todos los ingredientes unos 30 segundos, hasta que quede cremoso.'],
+'Yogur con galletas':['Mezcla el yogur con un poco de edulcorante y la esencia de vainilla.','Trocea las galletas por encima y añade la crema de cacahuete.'],
+'Batido de proteínas y galletas digestive':['Mezcla la proteína con agua según las instrucciones del paquete.','Bebe el batido y come las galletas aparte.'],
+'Macedonia de frutas con yogur':['Lava y trocea la fruta en un bol.','Sírvela con el yogur y el chocolate troceado por encima.'],
+'Pan protéico con miel, crema de cacahuete protéica y plátano':['Mezcla la crema de cacahuete con la proteína.','Unta el pan, añade el plátano en rodajas y un hilo de miel.'],
+'Helado casero rápido de frambuesa y plátano':['Tritura el plátano y las frambuesas congeladas con el yogur y la miel unos 30 segundos.','Sirve con las almendras picadas, o congélalo para más tarde.'],
+'Mousse de caseína':['Mezcla la caseína con la bebida vegetal poco a poco, hasta que quede tipo natillas.','Congela 30 min.','Añade el chocolate y el plátano por encima.'],
+'Tortitas de arroz con jamón serrano y queso crema':['Unta las tortitas con el queso crema.','Cúbrelas con las lonchas de jamón.'],
+'Tortitas de arroz con crema de cacahuete protéica, plátano y coco rallado':['Mezcla la proteína y la crema de cacahuete con muy poca leche, hasta hacer una crema.','Unta las tortitas y cubre con el plátano en rodajas y el coco.'],
+'Yogur con cereales, crema de cacahuete y arándanos':['Pon el yogur en un bol.','Añade los cereales, la crema de cacahuete y los arándanos lavados.'],
+'Corn flakes con proteína':['Mezcla la proteína con la bebida vegetal.','Añade los corn flakes y las fresas troceadas y riega con la proteína.'],
+'Mozzarella con tortitas de maíz y pavo':['Mezcla la mozzarella desmenuzada con sal y aceite y añade el pavo.','Trocea las tortitas y remueve con la mezcla. Come la fruta aparte.'],
+'Sándwich de pavo':['Tuesta el pan.','Móntalo con el pavo y un poco de aceite o mayonesa.'],
+'Tostada de queso philadelphia y mermelada':['Tuesta el pan.','Mezcla el queso con la proteína y la mermelada, úntalo y añade el plátano por encima.'],
+'Tostada de crema de cacahuete protéica y plátano':['Mezcla la proteína con la bebida vegetal y la crema de cacahuete.','Unta el pan tostado y añade el plátano en rodajas.'],
+'Corn flakes con proteína y plátano':['Mezcla la proteína en polvo con la bebida vegetal.','Sirve los cereales en un bol y cúbrelos con la crema de cacahuete, el plátano y la leche de proteína.'],
+'Yogur griego con arándanos y avena':['Pon el yogur griego en un bol.','Cúbrelo con los arándanos, la avena y la crema de cacahuete.'],
+'Tortitas de maíz con pavo y queso':['Unta las tortitas con el queso cottage y una pizca de sal.','Coloca el pavo por encima.'],
+'Yopro con cereales y chocolate':['Pon el yogur en un bol.','Trocea el chocolate negro y añádelo con los cereales.'],
+'Tortitas de maíz con queso y salmón ahumado':['Unta las tortitas con el queso cottage.','Pon el queso y el salmón ahumado por encima.'],
+'Brownie mugcake':['Mezcla todos los ingredientes menos la crema de cacahuete en una taza.','Calienta 1 min en el microondas.','Echa la crema de cacahuete por encima.'],
+'Tortitas de arroz con pavo + nueces':['Cubre las tortitas con el pavo.','Come las nueces aparte.'],
+'Mousse de caseína con fresas':['Mezcla la caseína con la bebida vegetal poco a poco, hasta que quede tipo natillas.','Congela 30 min.','Cubre con las fresas y la crema de cacahuete.'],
+'Pudín de chía y avena con coco y kiwi':['Mezcla la leche de coco con la proteína, la avena y la vainilla en un tarro.','Añade las semillas de chía, remueve bien y refrigera al menos 4 h o toda la noche.','Cúbrelo con el kiwi troceado justo antes de servir.'],
+'Tortitas de arroz con crema de cacahuete protéica y mermelada':['Mezcla la proteína con la crema de cacahuete hasta hacer una crema.','Cubre las tortitas con la crema y la mermelada.'],
+'Mugcake de arándanos en taza':['Mezcla todos los ingredientes en una taza grande.','Calienta 30 segundos en el microondas y vuelve a mezclar.','Calienta 1 min más, o hasta que esté cuajado.'],
+'Macedonia de frutas con yogur y cereales':['Lava y trocea la fruta en un bol.','Sírvela con el yogur, el muesli y el chocolate troceado.'],
+'Tortitas de arroz inflado con pechuga de pollo + nueces':['Monta las tortitas con el pollo en lonchas.','Come las nueces aparte.'],
+'Bagel con crema de cacahuete y plátano + batido de proteínas':['Unta el bagel con la crema de cacahuete y coloca el plátano en láminas por encima.','Mezcla la proteína con agua y bébela aparte.'],
+'Tortitas de arroz con jamón serrano + fruta':['Monta las tortitas con el jamón.','Come las fresas aparte.'],
+'Leche con proteína y Cocoa Pops':['Bate la bebida vegetal con la proteína hasta que no queden grumos.','Viértela sobre los cereales y añade la crema de cacahuete por encima.'],
+'Mugcake de avena y plátano al microondas':['Tritura todos los ingredientes menos la crema de cacahuete.','Cocina 1 min y medio en el microondas.','Cómelo con la crema de cacahuete por encima.'],
+'Avena con galletas':['Mezcla la avena con la proteína y la esencia de vainilla y añade bebida vegetal al gusto.','Echa las galletas troceadas y la crema por encima.']
+};
 const CATS={prot:'Proteína',verd:'Fruta y verdura',hidr:'Hidratos',lact:'Lácteos y huevos',gras:'Grasas y frutos secos',desp:'Despensa'};
 const REPARTO={desayuno:.25,comida:.35,cena:.28,snack:.12};
 
@@ -1665,6 +1818,31 @@ function abrirEjerciciosDia(d){
   $('#cerrarEjDia').onclick=()=>{ $('#ejModal').classList.remove('on'); pintarRutina(); pintarHoy(); };
 }
 
+function abrirPlato(dia,tipo){
+  const c=menuDia(dia).find(x=>x.tipo===tipo); if(!c) return;
+  const pasos=PASOS[c.nombre]||null;
+  const nomCat={prot:'Proteína',verd:'Fruta y verdura',hidr:'Hidratos',lact:'Lácteos y huevos',gras:'Grasas',desp:'Despensa'};
+  $('#ejBody').innerHTML=`
+    <p class="eyebrow">${tipo} · día ${dia%7+1}</p>
+    <h3 style="font-size:23px;margin:2px 0 8px">${c.nombre}</h3>
+    <p class="sub" style="margin:0 0 16px">${c.kcal} kcal. Las cantidades ya están ajustadas a tus ${energia().kcal} kcal del día.</p>
+    <p class="eyebrow" style="margin:0 0 8px">Ingredientes</p>
+    <div>${c.ing.map(([it,q,u,cat])=>`
+      <div style="display:flex;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)">
+        <b style="min-width:74px;font-variant-numeric:tabular-nums">${fmtQ(q,u)}</b>
+        <span style="flex:1">${it}</span>
+        <small style="color:var(--muted)">${nomCat[cat]||''}</small>
+      </div>`).join('')}</div>
+    <p class="eyebrow" style="margin:20px 0 8px">Preparación</p>
+    ${pasos?`<ol style="margin:0;padding-left:22px;line-height:1.65">${pasos.map(p=>`<li style="margin-bottom:9px">${p}</li>`).join('')}</ol>`
+      :`<p class="sub" style="margin:0">Este plato no tiene pasos guardados todavía.</p>`}
+    <p class="sub" style="margin:18px 0 0">Si algo no te gusta o no lo tienes, cámbialo por otro alimento parecido del mismo grupo. Las especias y la sal, al gusto.</p>
+    <button class="btn" id="cerrarPlato" style="width:100%;margin-top:18px">Listo</button>`;
+  $('#ejModal').classList.add('on');
+  $('#cerrarPlato').onclick=()=>$('#ejModal').classList.remove('on');
+  pintarAtras();
+}
+
 function abrirDia(i){
   const b=(S.plan&&S.plan[i])||[];
   const igual=(c)=>c.length===b.length&&c.every(x=>b.includes(x));
@@ -1923,7 +2101,7 @@ function cardDia(i){
       <h3 style="font-size:21px">${nombre}</h3>
       <span class="badge" style="margin-left:auto">${tot} kcal</span>
     </div>
-    ${m.map(c=>`<div class="comida">
+    ${m.map(c=>`<div class="comida" data-plato="${i}|${c.tipo}" role="button" tabindex="0">
       <div class="t">${c.tipo}</div>
       <div class="n"><b>${c.nombre}</b><small>${c.ing.map(([it,q,u])=>it+' '+fmtQ(q,u)).join(' · ')}</small></div>
       <div class="k">${c.kcal}</div>
@@ -2176,6 +2354,8 @@ document.addEventListener('click',e=>{
   if(fr){ S.filtroRut=fr.dataset.frut; guardar(); abrirBiblioteca(); return; }
   const dx=e.target.closest('[data-diaexp]');
   if(dx){ const d=+dx.dataset.diaexp; DIA_ABIERTO=DIA_ABIERTO===d?null:d; pintarRutina(); return; }
+  const pt=e.target.closest('[data-plato]');
+  if(pt){ const [d,tipo]=pt.dataset.plato.split('|'); abrirPlato(+d,tipo); return; }
   const ee=e.target.closest('[data-editej]');
   if(ee){ abrirEjerciciosDia(+ee.dataset.editej); return; }
   const eb=e.target.closest('[data-ejbloque]');
